@@ -7,6 +7,7 @@
 */
 require_once 'lib/classes/CronJob.class.php';
 
+
 class ModuleCompleted extends CronJob
 {
 
@@ -20,11 +21,10 @@ class ModuleCompleted extends CronJob
         return dgettext('Zertifikat', 'Sendet Teilnahmezertifikat für Nutzer welche die Lernmodule vollständig bearbeitet haben.');
     }
     
-    private static function sendZertifikatsMail($user, $seminar, $institute){
+    private static function sendZertifikatsMail($user, $seminar, $institute, $contact_mail){
         
         $filepath = self::pdf_action($user, $seminar, $institute);
-        //$Dateiname = "bg.pdf";
-        //$DateinameMail = "bg_anhang.pdf";
+
         $dateien = array($filepath);
         
         $mailtext = '<html>
@@ -32,7 +32,7 @@ class ModuleCompleted extends CronJob
 
             <body>
 
-            <h2>Teilnahmezertifikat</h2>
+            <h2>Teilnahmezertifikat für ' . $user . ':</h2>
 
             <p>Im Anhang finden Sie ein Teilnahmezertifikat für den/die Teilnehmer/in einer Onlineschulung</p>
 
@@ -40,52 +40,36 @@ class ModuleCompleted extends CronJob
             </html>
             ';
 
-            $empfaenger = "asudau@uos.de"; //Mailadresse
-            $absender   = "asudau@uos.de";
-            $betreff    = "Teilnahmezertifikat für erfolgreiche Teilnahme an Mitarbeiterschulung";
-            $antworten  = "asudau@uos.de";
+            $empfaenger = $contact_mail;//$contact_mail; //Mailadresse
+            //$absender   = "asudau@uos.de";
+            $betreff    = "Teilnahmezertifikat für " . $user . " für erfolgreiche Teilnahme an Mitarbeiterschulung";
 
-            //$header .= "Content-type: text/html; charset=iso-8859-1\r\n";
-            
-            $Trenner = md5(uniqid(time()));
-            $Header .= "\nMIME-Version: 1.0";
-            $Header .= "\nContent-Type: multipart/mixed; boundary=$Trenner";
-            $Header .= "\n\nThis is a multi-part message in MIME format";
-            $Header .= "\n--$Trenner";
-            $Header .= "\nContent-Type: text/plain";
-            $Header .= "\nContent-Transfer-Encoding: 8bit";
-            $Header .= "\n--$Trenner";
-            $Header .= "\nContent-Type: application/pdf; name=$DateinameMail";
-            $Header .= "\nContent-Transfer-Encoding: base64";
-            $Header .= "\nContent-Disposition: attachment; filename=$DateinameMail";
-            $file_content = chunk_split(base64_encode($anhang));
-            $Header .= "\n\n$file_content";
-            $Header .= "\n\n";
-            $Header .= "\n--$Trenner--";
-
-            $Header .= "From: $absender\r\n";
-            $Header .= "Reply-To: $antwortan\r\n";
-            // $header .= "Cc: $cc\r\n";  // falls an CC gesendet werden soll
-            $Header .= "X-Mailer: PHP ". phpversion();
-
-            return self::mail_att( $empfaenger,
-                  $betreff,
-                  $mailtext,
-                  $absender,
-                  $absender,
-                  $antworten,
-                  $dateien);
+            $mail = new StudipMail();
+            return $mail->addRecipient($empfaenger)
+                //->addRecipient('elmar.ludwig@uos.de', 'Elmar Ludwig', 'Cc')
+                 ->setReplyToEmail('')
+                 ->setSenderEmail('')
+                 ->setSenderName('E-Learning - DSO - Datenschutz')
+                 ->setSubject($betreff)
+                 ->addFileAttachment($filepath, $name = 'zertifikat.pdf')
+                 ->setBodyHtml($mailtext)
+                 ->setBodyHtml(strip_tags($mailtext))  
+                 ->send();
 
     }
 
     public function execute($last_result, $parameters = array())
     {
         $db = DBManager::get();
-
+        PluginEngine::getPlugin('Courseware');
+        
         // get all courses with configured Zertifikats-Plugin
-        $res = $db->query("SELECT course_id FROM zertifikat_config");
-
-        while ($seminar_id = $res->fetchColumn()) {
+        $res = $db->query("SELECT course_id, contact_mail FROM zertifikat_config");
+        $entries = $res->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($entries as $entry) {
+            $contact_mail = $entry['contact_mail'];
+            $seminar_id = $entry['course_id'];
             $course = new Seminar($seminar_id);
             $institut = new Institute($course->getInstitutId());
              
@@ -130,7 +114,7 @@ class ModuleCompleted extends CronJob
                      
                      if (!$result){
                                     
-                         if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name)){
+                         if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name, $contact_mail)){
                          
                             $stmt = $db->prepare("INSERT INTO zertifikat_sent
                                 (user_id, course_id, mail_sent)
@@ -162,13 +146,7 @@ class ModuleCompleted extends CronJob
         global $STUDIP_BASE_PATH, $TMP_PATH;
         require_once $STUDIP_BASE_PATH.'/vendor/tcpdf/tcpdf.php';
         require_once $STUDIP_BASE_PATH.'/public/plugins_packages/elan-ev/Zertifikats_Plugin/models/zertifikatpdf.class.php';
-        /**
-        $note_content = Request::get("note-data");
-        $note_type = Request::get("note-type");
-        $note_color = Request::get("note-color");
-        $note_content = json_decode($note_content);
-         * 
-         */
+     
         
         // create new PDF document
         $pdf = new zertifikatpdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'ISO-8859-1', false);
@@ -191,9 +169,9 @@ class ModuleCompleted extends CronJob
                     . '<br><br><br><br><br>erfolgreich teilgenommen hat.'
                     . '<br><br><br><br><br><br><br><br>Stephan Beume<br>'
                     . 'Rechtsanwalt<br>'
-                    . 'Fachanwalt fuer Arbeitsrecht<br>'
-                    . 'Datenschutzbeauftragter (TUEV)<br>';
-            $pdf->writeHTMLCell('0', '0', '30', '80', $html, false, 0, false, 0);
+                    . 'Fachanwalt für Arbeitsrecht<br>'
+                    . 'Datenschutzbeauftragter (TÜV)<br>';
+            $pdf->writeHTMLCell('0', '0', '30', '80', studip_utf8encode($html), false, 0, false, 0);
         
         $fileid = time();   
         //$pdf->Output('/tmp/zertifikat'. $fileid, 'F');
@@ -251,59 +229,5 @@ class ModuleCompleted extends CronJob
         return $tmp;
     }
     
-    function mail_att($to, $subject, $message, $sender, $sender_email, $reply_email, $dateien) {   
-   if(!is_array($dateien)) {
-      $dateien = array($dateien);
-   }   
-   
-   $attachments = array();
-   foreach($dateien AS $key => $val) {
-      if(is_int($key)) {
-        $datei = $val;
-        $name = basename($datei);
-     } else {
-        $datei = $key;
-        $name = basename($val);
-     }
-     
-      $size = filesize($datei);
-      $data = file_get_contents($datei);
-      $type = mime_content_type($datei);
-     
-      $attachments[] = array("name"=>$name, "size"=>$size, "type"=>$type, "data"=>$data);
-   }
- 
-   $mime_boundary = "-----=" . md5(uniqid(microtime(), true));
- 
-   $header  ="From:".$sender."<".$sender_email.">\n";
-   $header .= "Reply-To: ".$reply_email."\n";
- 
-   $header.= "MIME-Version: 1.0\r\n";
-   $header.= "Content-Type: multipart/mixed;\r\n";
-   $header.= " boundary=\"".$mime_boundary."\"\r\n";
- 
-   $encoding = mb_detect_encoding($message, "utf-8, iso-8859-1, cp-1252");
-   $content = "This is a multi-part message in MIME format.\r\n\r\n";
-   $content.= "--".$mime_boundary."\r\n";
-   $content.= "Content-Type: text/html; charset=\"$encoding\"\r\n";
-   $content.= "Content-Transfer-Encoding: 8bit\r\n\r\n";
-   $content.= $message."\r\n";
- 
-   //$anhang ist ein Mehrdimensionals Array
-   //$anhang enthält mehrere Dateien
-   foreach($attachments AS $dat) {
-         $data = chunk_split(base64_encode($dat['data']));
-         $content.= "--".$mime_boundary."\r\n";
-         $content.= "Content-Disposition: attachment;\r\n";
-         $content.= "\tfilename=\"".$dat['name']."\";\r\n";
-         $content.= "Content-Length: .".$dat['size'].";\r\n";
-         $content.= "Content-Type: ".$dat['type']."; name=\"".$dat['name']."\"\r\n";
-         $content.= "Content-Transfer-Encoding: base64\r\n\r\n";
-         $content.= $data."\r\n";
-   }
-   $content .= "--".$mime_boundary."--"; 
-   
-   return mail($to, $subject, $content, $header);
-}
     
 }

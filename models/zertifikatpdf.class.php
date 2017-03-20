@@ -5,13 +5,11 @@ class zertifikatpdf extends TCPDF {
 
     //Page header
     public function Header() {
-            //rect
-            //$this->Rect(15, 8, 180, 24, 'F', '', array(0, 152, 101));
             
             // Logo
-            $this->Image(PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png', 45, 15, 15, '', '', '', '', false, 300);
+            $this->Image($GLOBALS['ABSOLUTE_PATH_STUDIP'] . '/' . PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png', 45, 15, 15, '', '', '', '', false, 300);
             //$img = file_get_contents(PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png');
-            $this->Image(PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png', 31, 80, 150, '', '', '', '', false, 300);
+            $this->Image($GLOBALS['ABSOLUTE_PATH_STUDIP'] . '/' . PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png', 31, 80, 150, '', '', '', '', false, 300);
             //$this->Image('@'.$img, 20, 12, 15, '', '', '', '', false, 300);
             // Set font
             $this->SetFont('helvetica', 'B', 18);
@@ -22,7 +20,7 @@ class zertifikatpdf extends TCPDF {
             $this->Ln(16);
             //$this->Cell(0, 0, 'DSO Datenschut z Osnabrück UG', 0, 1, 'L', 0, '', 0, true, 'T', 'B');
             $this->SetY(20);
-            $this->Cell(0, 0, 'DSO Datenschutz Osnabrueck UG', 0, 1, 'L', 0, '', 0);
+            $this->Cell(0, 0, studip_utf8encode('DSO Datenschutz Osnabrück UG'), 0, 1, 'L', 0, '', 0);
             $this->SetLeftMargin(70);
             $this->Line(20, 40, 190, 40, array(0, 152, 101));
             
@@ -40,16 +38,16 @@ class zertifikatpdf extends TCPDF {
             $this->SetFont('helvetica', '', 11);
             //$this->SetTextColor(0,127,75);
             // Page number
-            $this->Cell(0, 0, 'DSO Datenschutz Osnabrueck UG (haftungsbeschraenkt) ', 0, 1, 'L', 0, '', 0, false, 'C', 'C');
+            $this->Cell(0, 0, studip_utf8encode('DSO Datenschutz Osnabrück UG (haftungsbeschränkt) '), 0, 1, 'L', 0, '', 0, false, 'C', 'C');
             $this->Ln(2);
             $this->SetFont('helvetica', '', 8);
             //$this->Cell(0, 0, 'DSO Datenschutz Osnabrueck UG (haftungsbeschraenkt) ', 0, 1, 'L', 0, '', 0, false, 'C', 'C');
-            $this->MultiCell(35, 5, 'Brueckenstr. 3 <br>49090 Osnabrueck <br>Geschaeftsfuehrer <br>Amtsgericht Osnabrueck', 0, 'L', 0, 0, '', '', f, 0, true);
+            $this->MultiCell(35, 5, studip_utf8encode('Brückenstr. 3 <br>49090 Osnabrück <br>Geschaeftsführer <br>Amtsgericht Osnabrück'), 0, 'L', 0, 0, '', '', f, 0, true);
             $this->MultiCell(40, 5, 'www.DSO-Datenschutz.de <br>USt-ID-Nr. DE296231675 <br>RA Stephan Beume <br>HRB 208700', 0, 'L', 0, 0, '', '', f, 0, true);
             $this->MultiCell(45, 5, 'Bankhaus Hallbaum AG <br>IBAN DE89250601801000550051 <br>BIC HALLDE2HXXX <br>', 0, 'L', 0, 0, '', '', f, 0, true);
             $this->MultiCell(45, 5, 'Telefon 0541/60081631 <br>Telefax 0541/60081626 <br>info@DSO-Datenschutz.de <br>', 0, 'L', 0, 0, '', '', f, 0, true);
 
-            $this->Image(PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png', 177, 265, 12, '', '', '', '', false, 300);
+            $this->Image($GLOBALS['ABSOLUTE_PATH_STUDIP'] . '/' . PluginEngine::getPlugin('Zertifikats_Plugin')->getPluginPath().'/assets/images/logo.png', 177, 265, 12, '', '', '', '', false, 300);
             
     }
     
