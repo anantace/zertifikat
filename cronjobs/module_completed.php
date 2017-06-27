@@ -43,6 +43,7 @@ class ModuleCompleted extends CronJob
             $empfaenger = $contact_mail;//$contact_mail; //Mailadresse
             //$absender   = "asudau@uos.de";
             $betreff    = "Teilnahmezertifikat für " . $user . " für erfolgreiche Teilnahme an Mitarbeiterschulung";
+            $filename = 'zertifikat_'. str_replace(" ", "_", $user) . '.pdf';
 
             $mail = new StudipMail();
             return $mail->addRecipient($empfaenger)
@@ -51,7 +52,7 @@ class ModuleCompleted extends CronJob
                  ->setSenderEmail('')
                  ->setSenderName('E-Learning - DSO - Datenschutz')
                  ->setSubject($betreff)
-                 ->addFileAttachment($filepath, $name = 'zertifikat.pdf')
+                 ->addFileAttachment($filepath, $name = $filename)
                  ->setBodyHtml($mailtext)
                  ->setBodyHtml(strip_tags($mailtext))  
                  ->send();
