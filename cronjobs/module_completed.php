@@ -43,7 +43,7 @@ class ModuleCompleted extends CronJob
             $empfaenger = $contact_mail;//$contact_mail; //Mailadresse
             //$absender   = "asudau@uos.de";
             $betreff    = "Teilnahmezertifikat für " . $user . " für erfolgreiche Teilnahme an Mitarbeiterschulung";
-            $filename = 'zertifikat_'. str_replace(" ", "_", $user) . '.pdf';
+            $filename = 'zertifikat_'. clear_string($user) . '.pdf';
 
             $mail = new StudipMail();
             return $mail->addRecipient($empfaenger)
@@ -89,50 +89,50 @@ class ModuleCompleted extends CronJob
             //foreach TN()
             foreach ($members as $member){
   
-                $complete = false;
+                //if not already sent
+                 $stmt = $db->prepare("SELECT * FROM zertifikat_sent
+                    WHERE user_id = :user_id
+                    AND course_id = :sem_id");
+                 $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id));
+                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                foreach ($blocks_ids as $block_id){
-                    $block = new \Mooc\DB\Block($block_id['id']);
-                    if (!$block->hasUserCompleted($member['user_id'])){
-                        $complete = false;
-                        break;
-                    } else {
-                        $complete = true;
+                 if (!$result){
+                
+                    //prüfen ob alle Blöcke absolviert wurden
+                    $complete = false;
+
+                    foreach ($blocks_ids as $block_id){
+                        $block = new \Mooc\DB\Block($block_id['id']);
+                        if (!$block->hasUserCompleted($member['user_id'])){
+                            $complete = false;
+                            break;
+                        } else {
+                            $complete = true;
+                        }
                     }
-                }
               
                     if ($complete){
                     
-                    echo 'User '. $member['fullname'] .' hat die Inhalte des Kurses '. $course->name ." vollständig abgeschlossen: " . $ist ." von " . $soll  . "\n";
-
-                
-                    //if not already sent
-                     $stmt = $db->prepare("SELECT * FROM zertifikat_sent
-                        WHERE user_id = :user_id
-                        AND course_id = :sem_id");
-                     $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id));
-                     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                     
-                     if (!$result){
-                                    
-                         if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name, $contact_mail)){
+                        echo 'User '. $member['fullname'] .' hat die Inhalte des Kurses '. $course->name ." vollständig abgeschlossen: " . $ist ." von " . $soll  . "\n";
+     
+                        if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name, $contact_mail)){
                          
-                            $stmt = $db->prepare("INSERT INTO zertifikat_sent
+                            $stmt = $db->prepare("INSERT IGNORE INTO zertifikat_sent
                                 (user_id, course_id, mail_sent)
                                 VALUES (:user_id, :sem_id, '1')");
                             $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id));
                             
                             echo 'Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " durch User " . $member['fullname'] . " wurde versendet \n";
 
-                         }
-                    
-                     } else {
+                         } else {
+                             echo 'Mail konnte nicht versendet werden für: '. $member['fullname'] .' mail: '. $contact_mail . ' \n';
+                         }           
+                     }  
+                } else {
                          
-                        echo 'User '. $member['fullname'] .' hat Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " bereits erhalten. \n";
+                    echo 'User '. $member['fullname'] .' hat Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " bereits erhalten. \n";
 
-                     }
-                    
-                }
+                 }
             }
             
             
@@ -229,6 +229,16 @@ class ModuleCompleted extends CronJob
 
         return $tmp;
     }
+     
     
-    
+}
+
+function clear_string($str){
+        $search = array("ä", "ö", "ü", "ß", "Ä", "Ö",
+                "Ü", "&", "é", "á", "ó", " ");
+        $replace = array("ae", "oe", "ue", "ss", "Ae", "Oe",
+                 "Ue", "und", "e", "a", "o", "_");
+        $str = str_replace($search, $replace, $str);
+        //$str = strtolower(preg_replace("/[^a-zA-Z0-9]+/", trim($how), $str));
+        return $str;
 }
