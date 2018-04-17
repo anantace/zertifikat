@@ -1,10 +1,10 @@
 <?php
 
-class ZertifikatConfigEntry extends \SimpleORMap
+class ZertifikatSentEntry extends \SimpleORMap
 {
     protected static function configure($config = array())
     {
-        $config['db_table'] = 'zertifikat_config';
+        $config['db_table'] = 'zertifikat_sent';
 
         parent::configure($config);
     }
