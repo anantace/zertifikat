@@ -86,16 +86,16 @@ class IndexController extends StudipController {
         return PluginEngine::getURL($this->dispatcher->plugin, $params, join('/', $args));
     }
     
-     public function sendMail_action($user_id)
+     public function sendMail_action($username)
     {
-
+        $user = User::findByUsername($username);
         $seminar_id = Course::findCurrent()->seminar_id;
         $course = new Seminar($seminar_id);
         $institute = new Institute($course->getInstitutId());
         $zertifikatConfigEntry = ZertifikatConfigEntry::findOneBySQL('course_id = ?', array($seminar_id));
         $contact_mail = $zertifikatConfigEntry->getValue('contact_mail');
         
-        $filepath = $this->pdf_action($user, $course->name, $institute->name);
+        $filepath = $this->pdf_action($user->getFullName(), $course->name, $institute->name);
 
         $dateien = array($filepath);
         
@@ -104,7 +104,7 @@ class IndexController extends StudipController {
 
             <body>
 
-            <h2>Teilnahmezertifikat für ' . $user . ':</h2>
+            <h2>Teilnahmezertifikat für ' . $user->getFullName() . ':</h2>
 
             <p>Im Anhang finden Sie ein Teilnahmezertifikat für den/die Teilnehmer/in einer Onlineschulung</p>
 
@@ -114,8 +114,8 @@ class IndexController extends StudipController {
 
             $empfaenger = $contact_mail;//$contact_mail; //Mailadresse
             //$absender   = "asudau@uos.de";
-            $betreff    = "Teilnahmezertifikat für " . $user . " für erfolgreiche Teilnahme an Mitarbeiterschulung";
-            $filename = 'zertifikat_'. $this->clear_string($user) . '.pdf';
+            $betreff    = "Teilnahmezertifikat für " . $user->getFullName() . " für erfolgreiche Teilnahme an Mitarbeiterschulung";
+            $filename = 'zertifikat_'. $this->clear_string($user->getFullName()) . '.pdf';
 
             $mail = new StudipMail();
             $sent =  $mail->addRecipient($empfaenger)

@@ -20,7 +20,7 @@ class zertifikatpdf extends TCPDF {
             $this->Ln(16);
             //$this->Cell(0, 0, 'DSO Datenschut z Osnabrück UG', 0, 1, 'L', 0, '', 0, true, 'T', 'B');
             $this->SetY(20);
-            $this->Cell(0, 0, studip_utf8encode('DSO Datenschutz Osnabrück UG'), 0, 1, 'L', 0, '', 0);
+            $this->Cell(0, 0, studip_utf8encode('DSO Datenschutz Osnabrück GmbH'), 0, 1, 'L', 0, '', 0);
             $this->SetLeftMargin(70);
             $this->Line(20, 40, 190, 40, array(0, 152, 101));
             
@@ -38,7 +38,7 @@ class zertifikatpdf extends TCPDF {
             $this->SetFont('helvetica', '', 11);
             //$this->SetTextColor(0,127,75);
             // Page number
-            $this->Cell(0, 0, studip_utf8encode('DSO Datenschutz Osnabrück UG (haftungsbeschränkt) '), 0, 1, 'L', 0, '', 0, false, 'C', 'C');
+            $this->Cell(0, 0, studip_utf8encode('DSO Datenschutz Osnabrück GmbH '), 0, 1, 'L', 0, '', 0, false, 'C', 'C');
             $this->Ln(2);
             $this->SetFont('helvetica', '', 8);
             //$this->Cell(0, 0, 'DSO Datenschutz Osnabrueck UG (haftungsbeschraenkt) ', 0, 1, 'L', 0, '', 0, false, 'C', 'C');

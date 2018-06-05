@@ -28,8 +28,8 @@
         
             <td><?= $member['Vorname'] . ' ' . $member['Nachname']?></td>
             <td><?= $member['mail_sent'] ? 'Ja' : 'Nein' ?></td>
-            <td><?= $member['mail_sent'] ? "<a href='". $this->controller->url_for('index/sendMail/' . $member['user_id']) ."'>Zertifikat erneut versenden</a><br/>" :"" ?>
-                    <a href='<?= URLHelper::getLink("plugins.php/courseware/progress", array('uid' => $member['user_id'])) ?>' >Fortschritt ansehen</a></td>
+            <td><?= $member['mail_sent'] ? "<a href='". $this->controller->url_for('index/sendMail/' . $member['username']) ."'>Zertifikat erneut versenden</a><br/>" :"" ?>
+                    <a href='<?= URLHelper::getLink("plugins.php/courseware/progress", array('uid' => $member['username'])) ?>' >Fortschritt ansehen</a></td>
         </tr>
 <?php } ?>
 </table>
