@@ -65,7 +65,7 @@ class ModuleCompleted extends CronJob
         PluginEngine::getPlugin('Courseware');
         
         // get all courses with configured Zertifikats-Plugin
-        $res = $db->query("SELECT course_id, contact_mail FROM zertifikat_config");
+        $res = $db->query("SELECT course_id, contact_mail FROM zertifikat_config WHERE complete != 1");
         $entries = $res->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($entries as $entry) {
@@ -91,6 +91,7 @@ class ModuleCompleted extends CronJob
             $members = $course->getMembers('autor');
             
             //foreach TN()
+            $course_completed_by_all_members = true;
             foreach ($members as $member){
   
                 //if not already sent
@@ -133,20 +134,16 @@ class ModuleCompleted extends CronJob
                              echo 'Mail konnte nicht versendet werden für: '. $member['fullname'] .' mail: '. $contact_mail . ' \n';
                          }           
                      } else {
-                         if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
-                            echo $member['fullname'] . 'ist noch nicht fertig ';
-                        }
+                         //hier ist noch ein Nutzer der nicht fertig ist
+                         $course_completed_by_all_members = false;
                      }  
-                } else {
-                         
-                    /** echo 'User '. $member['fullname'] .' hat Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " bereits erhalten. \n";
-                    **/
-                    
-                 }
+                } 
             }
             
-            
-            //unset($course);
+            if ($course_completed_by_all_members){
+                $stmt = $db->prepare("UPDATE zertifikat_config SET complete = 1 WHERE course_id like :sem_id");
+                $stmt->execute(array('sem_id' => $seminar_id));
+            }
         }
 
         return true;

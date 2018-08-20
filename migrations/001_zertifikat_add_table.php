@@ -14,7 +14,8 @@ class ZertifikatAddTable extends Migration
         // add db-table
         $db->exec("CREATE TABLE IF NOT EXISTS `zertifikat_config` (
             `course_id` varchar(32) NOT NULL PRIMARY KEY,
-            `contact_mail` varchar(128) NOT NULL
+            `contact_mail` varchar(128) NOT NULL,
+            `completed` int(11) NOT NULL,
         )");
         $db->exec("CREATE TABLE IF NOT EXISTS `zertifikat_sent` (
             `user_id` varchar(32) NOT NULL,
