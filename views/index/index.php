@@ -29,7 +29,7 @@
             
                 if ($member['mail_sent']){
                     if ($member['mail_sent']->mkdate > 0){
-                        $mkdate = date('d.m.Y', $member['mail_sent']->mkdate);
+                        $mkdate = date('d.m.Y - G:i:s', $member['mail_sent']->mkdate);
                     } 
                 }
             ?>
