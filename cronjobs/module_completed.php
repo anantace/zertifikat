@@ -76,6 +76,10 @@ class ModuleCompleted extends CronJob
              
             //get number of TestBlocks in Course
             //$blocks = \Mooc\DB\Block::findBySQL('seminar_id = ? ORDER BY position', array($seminar_id));
+            if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
+                echo 'das betroffene Seminar ';
+            }
+                    
             
              $stmt = $db->prepare("SELECT id as id FROM mooc_blocks mb
                         WHERE mb.seminar_id = :sem_id
@@ -105,6 +109,9 @@ class ModuleCompleted extends CronJob
                         $block = new \Mooc\DB\Block($block_id['id']);
                         if (!$block->hasUserCompleted($member['user_id'])){
                             $complete = false;
+                            if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
+                                echo $member['fullname'] .' block ' . $block_id['id'];
+                            }
                             break;
                         } else {
                             $complete = true;
@@ -113,25 +120,28 @@ class ModuleCompleted extends CronJob
               
                     if ($complete){
                     
-                        echo 'User '. $member['fullname'] .' hat die Inhalte des Kurses '. $course->name ." vollständig abgeschlossen: " . $ist ." von " . $soll  . "\n";
-     
                         if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name, $contact_mail)){
                          
                             $stmt = $db->prepare("INSERT IGNORE INTO zertifikat_sent
-                                (user_id, course_id, mail_sent)
-                                VALUES (:user_id, :sem_id, '1')");
-                            $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id));
+                                (user_id, course_id, mail_sent, mkdate)
+                                VALUES (:user_id, :sem_id, '1', :mkdate)");
+                            $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id, 'mkdate' => time()));
                             
                             echo 'Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " durch User " . $member['fullname'] . " wurde versendet \n";
 
                          } else {
                              echo 'Mail konnte nicht versendet werden für: '. $member['fullname'] .' mail: '. $contact_mail . ' \n';
                          }           
+                     } else {
+                         if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
+                            echo $member['fullname'] . 'ist noch nicht fertig ';
+                        }
                      }  
                 } else {
                          
-                    echo 'User '. $member['fullname'] .' hat Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " bereits erhalten. \n";
-
+                    /** echo 'User '. $member['fullname'] .' hat Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " bereits erhalten. \n";
+                    **/
+                    
                  }
             }
             
