@@ -25,11 +25,13 @@
     </thead>
 <?php foreach ($members as $member){ ?>
     <tr>
-            <? if ($member['mail_sent']){
-                if ($member['mail_sent']->mkdate > 0){
-                    $mkdate = date('d.m.Y', $member['mail_sent']->mkdate);
+            <?  $mkdate = 'Ja';
+            
+                if ($member['mail_sent']){
+                    if ($member['mail_sent']->mkdate > 0){
+                        $mkdate = date('d.m.Y', $member['mail_sent']->mkdate);
+                    } 
                 }
-               } else $mkdate = 'Ja'; 
             ?>
             
             <td><?= $member['Vorname'] . ' ' . $member['Nachname']?></td>
