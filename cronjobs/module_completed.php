@@ -65,7 +65,7 @@ class ModuleCompleted extends CronJob
         PluginEngine::getPlugin('Courseware');
         
         // get all courses with configured Zertifikats-Plugin
-        $res = $db->query("SELECT course_id, contact_mail FROM zertifikat_config WHERE complete != 1");
+        $res = $db->query("SELECT course_id, contact_mail FROM zertifikat_config "); //WHERE complete != 1");
         $entries = $res->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($entries as $entry) {
@@ -135,15 +135,15 @@ class ModuleCompleted extends CronJob
                          }           
                      } else {
                          //hier ist noch ein Nutzer der nicht fertig ist
-                         $course_completed_by_all_members = false;
+                         //$course_completed_by_all_members = false;
                      }  
                 } 
             }
             
-            if ($course_completed_by_all_members){
-                $stmt = $db->prepare("UPDATE zertifikat_config SET complete = 1 WHERE course_id like :sem_id");
-                $stmt->execute(array('sem_id' => $seminar_id));
-            }
+//            if ($course_completed_by_all_members){
+//                $stmt = $db->prepare("UPDATE zertifikat_config SET complete = 1 WHERE course_id like :sem_id");
+//                $stmt->execute(array('sem_id' => $seminar_id));
+//            }
         }
 
         return true;
