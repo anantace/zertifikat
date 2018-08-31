@@ -121,7 +121,7 @@ class IndexController extends StudipController {
             $sent =  $mail->addRecipient($empfaenger)
                 //->addRecipient('elmar.ludwig@uos.de', 'Elmar Ludwig', 'Cc')
                  ->setReplyToEmail('')
-                 ->setSenderEmail('')
+                 ->setSenderEmail('noreply@dso-datenschutz.de')
                  ->setSenderName('E-Learning - DSO - Datenschutz')
                  ->setSubject($betreff)
                  ->addFileAttachment($filepath, $name = $filename)
