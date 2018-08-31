@@ -49,7 +49,7 @@ class ModuleCompleted extends CronJob
             return $mail->addRecipient($empfaenger)
                 //->addRecipient('elmar.ludwig@uos.de', 'Elmar Ludwig', 'Cc')
                  ->setReplyToEmail('')
-                 ->setSenderEmail('')
+                 ->setSenderEmail('noreply@dso-datenschutz.de')
                  ->setSenderName('E-Learning - DSO - Datenschutz')
                  ->setSubject($betreff)
                  ->addFileAttachment($filepath, $name = $filename)
@@ -71,79 +71,82 @@ class ModuleCompleted extends CronJob
         foreach ($entries as $entry) {
             $contact_mail = $entry['contact_mail'];
             $seminar_id = $entry['course_id'];
-            $course = new Seminar($seminar_id);
-            $institut = new Institute($course->getInstitutId());
-             
-            //get number of TestBlocks in Course
-            //$blocks = \Mooc\DB\Block::findBySQL('seminar_id = ? ORDER BY position', array($seminar_id));
-            if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
-                echo 'das betroffene Seminar ';
-            }
-                    
-            
-             $stmt = $db->prepare("SELECT id as id FROM mooc_blocks mb
-                        WHERE mb.seminar_id = :sem_id
-                        AND mb.type = 'Chapter'");
-                $stmt->execute(array('sem_id' => $seminar_id));
-                $blocks_ids = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $course = Course::find($seminar_id);
+            if ($course){
+                $course = new Seminar($seminar_id);
+                $institut = new Institute($course->getInstitutId());
 
-            //get TN
-            $members = $course->getMembers('autor');
-            
-            //foreach TN()
-            $course_completed_by_all_members = true;
-            foreach ($members as $member){
-  
-                //if not already sent
-                 $stmt = $db->prepare("SELECT * FROM zertifikat_sent
-                    WHERE user_id = :user_id
-                    AND course_id = :sem_id");
-                 $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id));
-                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                //get number of TestBlocks in Course
+                //$blocks = \Mooc\DB\Block::findBySQL('seminar_id = ? ORDER BY position', array($seminar_id));
+                if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
+                    echo 'das betroffene Seminar ';
+                }
 
-                 if (!$result){
-                
-                    //prüfen ob alle Blöcke absolviert wurden
-                    $complete = false;
 
-                    foreach ($blocks_ids as $block_id){
-                        $block = new \Mooc\DB\Block($block_id['id']);
-                        if (!$block->hasUserCompleted($member['user_id'])){
-                            $complete = false;
-                            if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
-                                echo $member['fullname'] .' block ' . $block_id['id'];
+                 $stmt = $db->prepare("SELECT id as id FROM mooc_blocks mb
+                            WHERE mb.seminar_id = :sem_id
+                            AND mb.type = 'Chapter'");
+                    $stmt->execute(array('sem_id' => $seminar_id));
+                    $blocks_ids = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                //get TN
+                $members = $course->getMembers('autor');
+
+                //foreach TN()
+                $course_completed_by_all_members = true;
+                foreach ($members as $member){
+
+                    //if not already sent
+                     $stmt = $db->prepare("SELECT * FROM zertifikat_sent
+                        WHERE user_id = :user_id
+                        AND course_id = :sem_id");
+                     $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id));
+                     $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                     if (!$result){
+
+                        //prüfen ob alle Blöcke absolviert wurden
+                        $complete = false;
+
+                        foreach ($blocks_ids as $block_id){
+                            $block = new \Mooc\DB\Block($block_id['id']);
+                            if (!$block->hasUserCompleted($member['user_id'])){
+                                $complete = false;
+                                if ($seminar_id == '240f7e7eaa7b167363090a9d36b19e6c'){
+                                    echo $member['fullname'] .' block ' . $block_id['id'];
+                                }
+                                break;
+                            } else {
+                                $complete = true;
                             }
-                            break;
-                        } else {
-                            $complete = true;
                         }
-                    }
-              
-                    if ($complete){
-                    
-                        if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name, $contact_mail)){
-                         
-                            $stmt = $db->prepare("INSERT IGNORE INTO zertifikat_sent
-                                (user_id, course_id, mail_sent, mkdate)
-                                VALUES (:user_id, :sem_id, '1', :mkdate)");
-                            $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id, 'mkdate' => time()));
-                            
-                            echo 'Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " durch User " . $member['fullname'] . " wurde versendet \n";
 
+                        if ($complete){
+
+                            if(self::sendZertifikatsMail($member['fullname'], $course->name, $institut->name, $contact_mail)){
+
+                                $stmt = $db->prepare("INSERT IGNORE INTO zertifikat_sent
+                                    (user_id, course_id, mail_sent, mkdate)
+                                    VALUES (:user_id, :sem_id, '1', :mkdate)");
+                                $stmt->execute(array('user_id' => $member['user_id'], 'sem_id' => $seminar_id, 'mkdate' => time()));
+
+                                echo 'Bescheinigung über Abschluss der Inhalte des Kurses '. $course->name . " durch User " . $member['fullname'] . " wurde versendet \n";
+
+                             } else {
+                                 echo 'Mail konnte nicht versendet werden für: '. $member['fullname'] .' mail: '. $contact_mail . ' \n';
+                             }           
                          } else {
-                             echo 'Mail konnte nicht versendet werden für: '. $member['fullname'] .' mail: '. $contact_mail . ' \n';
-                         }           
-                     } else {
-                         //hier ist noch ein Nutzer der nicht fertig ist
-                         //$course_completed_by_all_members = false;
-                     }  
-                } 
+                             //hier ist noch ein Nutzer der nicht fertig ist
+                             //$course_completed_by_all_members = false;
+                         }  
+                    } 
+                }
+
+    //            if ($course_completed_by_all_members){
+    //                $stmt = $db->prepare("UPDATE zertifikat_config SET complete = 1 WHERE course_id like :sem_id");
+    //                $stmt->execute(array('sem_id' => $seminar_id));
+    //            }
             }
-            
-//            if ($course_completed_by_all_members){
-//                $stmt = $db->prepare("UPDATE zertifikat_config SET complete = 1 WHERE course_id like :sem_id");
-//                $stmt->execute(array('sem_id' => $seminar_id));
-//            }
         }
 
         return true;
