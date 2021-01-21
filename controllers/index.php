@@ -93,9 +93,15 @@ class IndexController extends StudipController {
         $course = new Seminar($seminar_id);
         $institute = new Institute($course->getInstitutId());
         $zertifikatConfigEntry = ZertifikatConfigEntry::findOneBySQL('course_id = ?', array($seminar_id));
+        $zertifikatSentEntry = ZertifikatSentEntry::findOneBySQL('course_id = ? AND user_id = ?', array($seminar_id, $user->user_id));
+        if ($zertifikatSentEntry) {
+            $mkdate = $zertifikatSentEntry->mkdate;
+        } else {
+            $mkdate = time();
+        }
         $contact_mail = $zertifikatConfigEntry->getValue('contact_mail');
         
-        $filepath = $this->pdf_action($user->getFullName(), $course->name, $institute->name);
+        $filepath = $this->pdf_action($user->getFullName(), $course->name, $institute->name, $mkdate);
 
         $dateien = array($filepath);
         
@@ -140,7 +146,7 @@ class IndexController extends StudipController {
     }
     
     
-    private function pdf_action($user, $seminar, $institute)
+    private function pdf_action($user, $seminar, $institute, $mkdate)
     {
         global $STUDIP_BASE_PATH, $TMP_PATH;
         require_once $STUDIP_BASE_PATH.'/vendor/tcpdf/tcpdf.php';
@@ -161,7 +167,7 @@ class IndexController extends StudipController {
         
             //$html = $this->htmlentitiesOutsideHTMLTags($note_content[0], ENT_HTML401);
             $html = 'Hiermit wird bescheinigt, dass <br><br><br><br><b>Herr/Frau '. $user 
-                    . '</b><br><br><br>am ' . date("d.m.Y",time()) 
+                    . '</b><br><br><br>am ' . date("d.m.Y",$mkdate) 
                     . '<br><br><br>an der Mitarbeiterschulung der Fa. ' . $institute
                     . '</b><br><br><br>zum Thema<br>'
                     . '<h1 style="text-align:center">' . $seminar . '</h1>'
